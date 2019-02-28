@@ -1,83 +1,107 @@
 import json
+import getpass
 from pathlib import Path
-import requests
-from requests_jwt import JWTAuth
-from requests.exceptions import *
-from requests.auth import AuthBase
+from pprintpp import pprint
+from requests_toolbelt import MultipartEncoder
+
+from .services import Services
 
 
-class JWTAuth(AuthBase):
-    def __init__(self, token):
-        self.token = token
-
-    def __call__(self, r):
-        r.headers['Authorization'] = f'Bearer {self.token}'
-        return r
-
-
-class Client(object):
+class Client(Services):
     def __init__(self):
-        self.server = 'http://localhost:5000/api'
-        self.tokens = {'access_token': None, 'refresh_token': None}
-        self._load()
+        super().__init__()
 
-    def _save(self):
-        with open('auth.json', 'w') as f:
-            json.dump(self.tokens, f)
+    def register(self, user=None, password=None):
+        if user is None:
+            user = getpass.getuser()
+        if password is None:
+            password = getpass.getpass()
 
-    def _load(self):
-        if Path('auth.json').exists():
-            with open('auth.json') as f:
-                self.tokens = json.load(f)
-            self.auth = JWTAuth(self.tokens['access_token'])
+        reply = self.post('admin/register',
+                          data={"username": user, "password": password})
+        r = json.loads(reply.content)
+        if reply.status_code == 201:
+            self.credentials(user=user, token=r['token'])
+            print('ok')
+        else:
+            raise ValueError(r.get('message', 'unexpected return code'))
 
-    def register(self, user, password):
-        try:
-            reply = requests.post(self.server+'/admin/register',
-                              data={
-                                    "username": user,
-                                    "password": password
-                                })
-            print("content:", reply.content)
-            r = json.loads(reply.content)
-            if reply.status_code == 201:
-                self.tokens= r['Authorization']
-                self._save()
-                self._load()
-                print('ok')
-            else:
-                raise ValueError(r['message'])
+    def login(self, user=None, password=None):
+        if user is None:
+            user = getpass.getuser()
+        if password is None:
+            password = getpass.getpass()
 
-        except ConnectionRefusedError as e:
-            print("Connection refused")
-            raise ConnectionError(e)
-
-        except ConnectionError as e:
-            print("Connection error:", e)
-            raise ConnectionError(e)
+        reply = self.post('auth/login',
+                          data={"username": user, "password": password})
+        r = json.loads(reply.content)
+        if reply.status_code == 200:
+            self.credentials(user=user, token=r['token'])
+            print('logged in')
+        else:
+            raise ValueError(r.get('message', 'unexpected return code'))
 
     def test(self):
-        r = requests.get(self.server + '/auth/token', auth=self.auth)
+        r = self.get('auth/token', auth=self.auth)
         return r
 
-    def run(self, sim=None, name=None):
+    #
+    # batch services
+    #
+
+    def run(self, scenario, format='sqlite', name=None):
+        data = {}
+        if name is not None:
+            data['name'] = name
+
+        sim = dict(format=format)
+        files = None
+        if type(scenario) == str:
+            filename = Path(scenario)
+            if not filename.exists():
+                raise FileNotFoundError
+            with open(scenario, 'r') as f:
+                sim['scenario'] = f.read()
+                sim['scenario_filename'] = filename.name
+        else:
+            sim['scenario'] = scenario
+
+        data['simulation'] = sim
+        r = self.post('batch/run', json=data)
+        return r.json()
+
+    def status(self, jobid):
+        return self.get(f'batch/status/{jobid}').json()
+
+    #
+    # datastore services
+    #
+
+    def files(self, name=None, jobid=None, pp=False):
+        payload = {}
+        if name is not None:
+            payload['name'] = name
+        if jobid is not None:
+            payload['jobid'] = jobid
+
+        r = self.get('datastore/files', json=payload).json()
+        if pp:
+            pprint(r)
+        return r
+
+    def fetch(self, filename, jobid, name=None):
         payload = {
+            'jobid': jobid,
+            'filename': filename,
         }
         if name is not None:
             payload['name'] = name
-        if sim is not None:
-            payload['sim'] = sim
+        r = self.get('datastore/fetch', json=payload, stream=False)
+        return r.content
 
-        r = requests.post(self.server+'/services/batch/run', data=payload, auth=self.auth)
-
-        return r
-
-    # def fetch(self, filename, jobid, name=None):
-    #     payload = {
-    #         'jobid': jobid,
-    #         'filename': filename,
-    #     }
-    #     if name is not None:
-    #         payload['name'] = name
-    #     r = requests.get(self.server + '/services/datastore/fetch', data=payload, stream=False, auth=JWTAuth(self.auth['access_token']))
-    #     return r
+    def save(self, filename, jobid, to=None, name=None):
+        if to is None:
+            to = filename
+        raw = self.fetch(filename, jobid, name)
+        with open(to, 'wb') as f:
+            f.write(raw)
