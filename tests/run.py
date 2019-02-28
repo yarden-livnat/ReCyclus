@@ -1,8 +1,11 @@
 
+
 from recyclus import Client
 
 client = Client()
 
-r = client.test()
+r = client.run(sim={
+    'scenario': 'very_bad_scenario'
+})
 
 print(r.content)
