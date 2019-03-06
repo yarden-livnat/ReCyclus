@@ -29,7 +29,7 @@ class Services(object):
         self.auth = auth
         self.load_config(config_file)
         self.auth.load(self.config['auth_file'])
-        self.server = self.config['server']
+        self._server = self.config['server']
 
     def load_config(self, config_file=None):
         config_file = config_file or self.config['config_file']
@@ -50,7 +50,7 @@ class Services(object):
         self.auth.save(self.config['auth_file'])
 
     def url(self, service, server):
-        return f'{server or self.server}/{service}'
+        return f'{server or self._server}/{service}'
 
     @protect
     @auth.authenticate

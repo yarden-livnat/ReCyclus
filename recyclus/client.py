@@ -2,14 +2,23 @@ import json
 import getpass
 from pathlib import Path
 from pprintpp import pprint
-from requests_toolbelt import MultipartEncoder
 
 from .services import Services
+from .job import Job
 
 
 class Client(Services):
     def __init__(self):
         super().__init__()
+
+    def server(self, url=None):
+        if url is None:
+            return self._server
+        self._server = url
+
+    #
+    # admin services
+    #
 
     def register(self, user=None, password=None):
         if user is None:
@@ -45,33 +54,22 @@ class Client(Services):
         r = self.get('auth/token', auth=self.auth)
         return r
 
+    def job(self, jobid, name):
+        return Job(self, jobid=jobid, name=name)
+
     #
     # batch services
     #
 
     def run(self, scenario, format='sqlite', name=None):
-        data = {}
-        if name is not None:
-            data['name'] = name
-
-        sim = dict(format=format)
-        files = None
-        if type(scenario) == str:
-            filename = Path(scenario)
-            if not filename.exists():
-                raise FileNotFoundError
-            with open(scenario, 'r') as f:
-                sim['scenario'] = f.read()
-                sim['scenario_filename'] = filename.name
-        else:
-            sim['scenario'] = scenario
-
-        data['simulation'] = sim
-        r = self.post('batch/run', json=data)
-        return r.json()
+        job = Job(self, scenario, format, name)
+        return job.run()
 
     def status(self, jobid):
         return self.get(f'batch/status/{jobid}').json()
+
+    def cancel(self, jobid):
+        return self.delete(f'batch/cancel/{jobid}').json()
 
     #
     # datastore services
