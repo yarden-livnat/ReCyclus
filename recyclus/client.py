@@ -7,14 +7,14 @@ from .services import Services
 from .job import Job
 
 
-class Client(Services):
+class Client(object):
     def __init__(self):
-        super().__init__()
+        self.services = Services()
 
     def server(self, url=None):
         if url is None:
-            return self._server
-        self._server = url
+            return self.services.server
+        self.services.server = url
 
     #
     # admin services
@@ -26,11 +26,11 @@ class Client(Services):
         if password is None:
             password = getpass.getpass()
 
-        reply = self.post('admin/register',
+        reply = self.services.post('admin/register',
                           data={"username": user, "password": password})
         r = json.loads(reply.content)
         if reply.status_code == 201:
-            self.credentials(user=user, token=r['token'])
+            self.services.credentials(user=user, token=r['token'])
             print('ok')
         else:
             raise ValueError(r.get('message', 'unexpected return code'))
@@ -41,17 +41,17 @@ class Client(Services):
         if password is None:
             password = getpass.getpass()
 
-        reply = self.post('auth/login',
+        reply = self.services.post('auth/login',
                           data={"username": user, "password": password})
         r = json.loads(reply.content)
         if reply.status_code == 200:
-            self.credentials(user=user, token=r['token'])
+            self.services.credentials(user=user, token=r['token'])
             print('logged in')
         else:
             raise ValueError(r.get('message', 'unexpected return code'))
 
     def test(self):
-        r = self.get('auth/token', auth=self.auth)
+        r = self.services.get('auth/token', auth=self.services.auth)
         return r
 
     def job(self, jobid, name):
@@ -61,15 +61,18 @@ class Client(Services):
     # batch services
     #
 
-    def run(self, scenario, format='sqlite', name=None):
-        job = Job(self, scenario, format, name)
+    def run(self, scenario, format='sqlite', name=None, post=None):
+        job = Job(self, scenario, format, name, post)
         return job.run()
 
     def status(self, jobid):
-        return self.get(f'batch/status/{jobid}').json()
+        return self.services.get(f'batch/status/{jobid}').json()
 
     def cancel(self, jobid):
-        return self.delete(f'batch/cancel/{jobid}').json()
+        return self.services.delete(f'batch/cancel/{jobid}').json()
+
+    def delete(self, jobid):
+        return self.services.delete(f'batch/delete/{jobid}')
 
     #
     # datastore services
@@ -82,7 +85,7 @@ class Client(Services):
         if jobid is not None:
             payload['jobid'] = jobid
 
-        r = self.get('datastore/files', json=payload).json()
+        r = self.services.get('datastore/files', json=payload).json()
         if pp:
             pprint(r)
         return r
@@ -94,12 +97,13 @@ class Client(Services):
         }
         if name is not None:
             payload['name'] = name
-        r = self.get('datastore/fetch', json=payload, stream=False)
+        r = self.services.get('datastore/fetch', json=payload, stream=False)
         return r.content
 
     def save(self, filename, jobid, to=None, name=None):
         if to is None:
             to = filename
-        raw = self.fetch(filename, jobid, name)
+        raw = self.services.fetch(filename, jobid, name)
         with open(to, 'wb') as f:
             f.write(raw)
+
