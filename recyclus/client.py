@@ -54,15 +54,15 @@ class Client(object):
         r = self.services.get('auth/token', auth=self.services.auth)
         return r
 
-    def job(self, jobid, name):
-        return Job(self, jobid=jobid, name=name)
+    def job(self, jobid, project):
+        return Job(self, jobid=jobid, project=project)
 
     #
     # batch services
     #
 
-    def run(self, scenario, format='sqlite', name=None, post=None):
-        job = Job(self, scenario, format, name, post)
+    def run(self, scenario, format='sqlite', project=None, post=None):
+        job = Job(self, scenario, format, project, post)
         return job.run()
 
     def status(self, jobid):
@@ -78,10 +78,10 @@ class Client(object):
     # datastore services
     #
 
-    def files(self, name=None, jobid=None, pp=False):
+    def files(self, project=None, jobid=None, pp=False):
         payload = {}
-        if name is not None:
-            payload['name'] = name
+        if project is not None:
+            payload['project'] = project
         if jobid is not None:
             payload['jobid'] = jobid
 
@@ -90,20 +90,20 @@ class Client(object):
             pprint(r)
         return r
 
-    def fetch(self, filename, jobid, name=None):
+    def fetch(self, filename, jobid, project=None):
         payload = {
             'jobid': jobid,
             'filename': filename,
         }
-        if name is not None:
-            payload['name'] = name
+        if project is not None:
+            payload['project'] = project
         r = self.services.get('datastore/fetch', json=payload, stream=False)
         return r.content
 
-    def save(self, filename, jobid, to=None, name=None):
+    def save(self, filename, jobid, to=None, project=None):
         if to is None:
             to = filename
-        raw = self.services.fetch(filename, jobid, name)
+        raw = self.services.fetch(filename, jobid, project)
         with open(to, 'wb') as f:
             f.write(raw)
 

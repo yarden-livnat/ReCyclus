@@ -4,7 +4,7 @@ import time
 
 client = Client()
 
-job = client.run(scenario='./scenario.xml')
+job = client.run(scenario='./scenario.xm')
 
 print('jobid:', job.jobid)
 
