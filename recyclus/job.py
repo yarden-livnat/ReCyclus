@@ -2,18 +2,18 @@ from pathlib import Path
 
 
 class Job(object):
-    def __init__(self, client, scenario=None, format='sqlite', name='default', post=None, jobid=None):
+    def __init__(self, client, scenario=None, format='sqlite', project='default', post=None, jobid=None):
         self.client = client
         self.scenario = scenario
         self.format = format
-        self.name = name
+        self.project = project
         self.post = post
         self.jobid = jobid
 
     def run(self):
         payload = {}
-        if self.name is not None:
-            payload['name'] = self.name
+        if self.project is not None:
+            payload['project'] = self.project
 
         payload['tasks'] = tasks = {}
         tasks['simulation'] = sim = dict(format=self.format)
@@ -40,7 +40,7 @@ class Job(object):
             else:
                 raise ValueError('post must be a filename or a dictionary')
 
-        r = self.client.post('batch/run', json=payload)
+        r = self.client.services.post('batch/run', json=payload)
         r.raise_for_status()
         info = r.json()
         if 'jobid' in info:
@@ -58,16 +58,16 @@ class Job(object):
         return self.client.cancel(self.jobid)
 
     def files(self):
-        r = self.client.files(name=self.name, jobid=self.jobid)
+        r = self.client.files(project=self.project, jobid=self.jobid)
         if len(r) > 0:
             return r[0]['files']
         return 'no files found'
 
     def fetch(self, filename):
-        return self.client.fetch(filename, jobod=self.jobid, name=self.name)
+        return self.client.fetch(filename, jobod=self.jobid, project=self.project)
 
-    def save(self, filename):
-        return self.client.save(filename, jobid=self.jobid, name=self.name)
+    def save(self, filename, to=None):
+        return self.client.save(filename, jobid=self.jobid, project=self.project, to=to)
 
     def delete(self):
         return self.client.delete(jobid=self.jobid)
