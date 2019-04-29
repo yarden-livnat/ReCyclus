@@ -1,7 +1,6 @@
-import json
 import getpass
-from pathlib import Path
-from pprintpp import pprint
+import json
+import pp
 
 from .services import Services
 from .job import Job
@@ -72,23 +71,35 @@ class Client(object):
         return self.services.delete(f'batch/cancel/{jobid}').json()
 
     def delete(self, jobid):
-        return self.services.delete(f'batch/delete/{jobid}')
+        return self.services.delete(f'batch/delete/{jobid}').json()
 
     #
     # datastore services
     #
 
-    def files(self, project=None, jobid=None, pp=False):
+    def files(self, project=None, jobid=None):
         payload = {}
         if project is not None:
-            payload['name'] = project
+            payload['project'] = project
         if jobid is not None:
             payload['jobid'] = jobid
 
         r = self.services.get('datastore/files', json=payload).json()
-        if pp:
-            pprint(r)
         return r
+
+    def list(self, project=None, jobid=None):
+        files = self.files(project, jobid)
+        user = None
+        project = None
+        for entry in files:
+            if entry['user'] != user:
+                user = entry['user']
+                print('User:', user)
+                project = None
+            if entry['project'] != project:
+                project  = entry['project']
+                print('\tProject:', project)
+            print(f"\t\tJob: {entry['jobid']}    Files: {entry['files']}")
 
     def fetch(self, filename, jobid, project=None):
         payload = {

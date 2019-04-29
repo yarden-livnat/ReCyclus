@@ -3,7 +3,7 @@ import yaml
 from pathlib import Path
 
 from .config import config
-from auth import Auth
+from .auth import Auth
 from requests.exceptions import *
 
 auth = Auth()
@@ -36,7 +36,7 @@ class Services(object):
         config_file = Path(config_file)
         if config_file.exists():
             with open(config_file, 'r') as f:
-                cfg = yaml.load(f)
+                cfg = yaml.load(f, Loader=yaml.FullLoader)
                 self.config = {**self.config, **cfg}
 
     def save_config(self):
@@ -55,19 +55,27 @@ class Services(object):
     @protect
     @auth.authenticate
     def get(self, service, server=None, *args, **kwargs):
-        return requests.get(self.url(service, server), *args, **kwargs)
+        r = requests.get(self.url(service, server), *args, **kwargs)
+        r.raise_for_status()
+        return r
 
     @protect
     @auth.authenticate
     def post(self, service, server=None, *args, **kwargs):
-        return requests.post(self.url(service, server), *args, **kwargs)
+        r = requests.post(self.url(service, server), *args, **kwargs)
+        r.raise_for_status()
+        return r
 
     @protect
     @auth.authenticate
     def put(self, service, server=None, *args, **kwargs):
-        return requests.put(self.url(service, server), *args, **kwargs)
+        r = requests.put(self.url(service, server), *args, **kwargs)
+        r.raise_for_status()
+        return r
 
     @protect
     @auth.authenticate
     def delete(self, service, server=None, **kwargs):
-        return requests.delete(self.url(service, server), **kwargs)
+        r = requests.delete(self.url(service, server), **kwargs)
+        r.raise_for_status()
+        return r

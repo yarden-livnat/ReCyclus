@@ -2,4 +2,4 @@ from recyclus import Client
 
 client = Client()
 
-client.register(password='password')
+client.register(password='1%f#GH*aj')
