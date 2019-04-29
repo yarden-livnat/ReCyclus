@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 
 class Job(object):
@@ -9,6 +10,10 @@ class Job(object):
         self.project = project
         self.post = post
         self.jobid = jobid
+        if jobid is not None:
+            m = re.search(':(\w+)-', jobid)
+            if m:
+                self.project = m.group(1)
 
     def run(self):
         payload = {}
@@ -62,6 +67,9 @@ class Job(object):
         if len(r) > 0:
             return r[0]['files']
         return 'no files found'
+
+    def list(self):
+        self.client.list(project=self.project, jobid=self.jobid)
 
     def fetch(self, filename):
         return self.client.fetch(filename, jobod=self.jobid, project=self.project)

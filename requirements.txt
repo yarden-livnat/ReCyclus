@@ -1,5 +1,6 @@
 pp-ez
 pprintpp
+pyyaml
 requests
 requests_jwt
 

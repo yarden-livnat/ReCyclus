@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='recyclus',
-    version='0.2.0',
+    version='0.3.0',
     license='BSD',
     maintainer='Yarden Livnat',
     description='Client for Recyclus remote services',
@@ -19,9 +19,9 @@ setup(
         'pyyaml'
     ],
     extras_require={
-        'test': [
-            'pytest',
-            'coverage',
-        ],
+        # 'test': [
+        #     'pytest',
+        #     'coverage',
+        # ],
     },
 )

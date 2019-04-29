@@ -29,7 +29,17 @@ class Services(object):
         self.auth = auth
         self.load_config(config_file)
         self.auth.load(self.config['auth_file'])
-        self.server = self.config['server']
+        self._server = self.config['server']
+
+    @property
+    def server(self):
+        return self._server
+
+    @server.setter
+    def server(self, url):
+        self._server = url
+        self.config['server'] = url
+        self.save_config()
 
     def load_config(self, config_file=None):
         config_file = config_file or self.config['config_file']

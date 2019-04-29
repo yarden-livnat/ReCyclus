@@ -1,4 +1,3 @@
-import pp
 from recyclus import Client
 import time
 
@@ -8,29 +7,36 @@ def load(job):
     client.save('cyclus.sqlite', job.jobid)
 
 
+def wait_for_completion(job):
+    while True:
+        time.sleep(2)
+        resp = job.status()
+        if resp['status'] != 'ok':
+            print(f'Error:', resp['message'])
+            return
+
+        info = resp['info']
+        print(f"\tStatus: {info['status']} {info.get('error', '')}")
+
+        if info['status'] in ['done', 'error', 'unknown job']:
+            if info['status'] == 'done':
+                load(job)
+                # job.delete()
+                print('done')
+            return
+
+
 client = Client()
+job = client.run(scenario='./scenario.xml', project='demo')
 
-job = client.run(scenario='./scenario.xml', project='a')
-
+wait_for_completion(job)
 print('job submitted:', job.jobid)
 
-while True:
-    time.sleep(2)
-    # print('\tchecking status...')
-    resp = job.status()
-    if resp['status'] != 'ok':
-        print(f'Error:', resp['message'])
-        break
 
-    info = resp['info']
-    print(f"\tStatus: {info['status']} {info.get('error', '')}")
+print('files:',job.files)
 
-    if info['status'] in ['done', 'error', 'unknown job']:
-        if info['status'] == 'done':
-            load(job)
-            # job.delete()
-            print('done')
-        break
+print('list:')
+job.list()
 
 
 

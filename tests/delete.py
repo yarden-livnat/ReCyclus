@@ -1,8 +1,8 @@
 from recyclus import Client
 
 client = Client()
-job = client.job('yarden:default-4', 'test')
+job = client.job('yarden:demo-3')
 print(job.files())
 
-r = job.delete()
-print(r)
+job.delete()
+

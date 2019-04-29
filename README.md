@@ -8,13 +8,16 @@ A python client for interacting with Recyclus services
 >>> from recyclus import Client
 >>> client = Client()
 
->>> client.server(url=...) # If you need to change from the default local service
+>>> client.server(host=...) # If you need to change from the default local service
 
 # A one time registration 
 # user: default to local username
 # password: the user will prompt for password if none was given
 
 >>> client.register(user=None, password=None) 
+
+# if you already registered from a different machine you can login
+>>> client.login(password='...') 
 
 # run a job
 >>> job = client.run(scenario='schenario.xml', project='demo')
@@ -49,10 +52,10 @@ A python client for interacting with Recyclus services
 
 ## Commands
 
-* `client.server(url)`: Change the remote services url (default is local machine). 
- The current url will be return if no url is given
+* `client.server(host)`: Change the remote services host (default is 'localhost'). 
+ The current url will be return if no host is given
 
 * `client.register(user=None, password=None)`: Register with the remote service User defaults to local username. If 
-no password is provided the syste
+no password is provided you'll be prompt for one
 
 

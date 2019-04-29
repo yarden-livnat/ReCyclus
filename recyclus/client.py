@@ -10,10 +10,10 @@ class Client(object):
     def __init__(self):
         self.services = Services()
 
-    def server(self, url=None):
-        if url is None:
+    def server(self, host=None):
+        if host is None:
             return self.services.server
-        self.services.server = url
+        self.services.server = f'http://{host}:5000/api'
 
     #
     # admin services
@@ -53,7 +53,7 @@ class Client(object):
         r = self.services.get('auth/token', auth=self.services.auth)
         return r
 
-    def job(self, jobid, project):
+    def job(self, jobid, project=None):
         return Job(self, jobid=jobid, project=project)
 
     #
