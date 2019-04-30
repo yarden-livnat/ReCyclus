@@ -1,6 +1,6 @@
 import getpass
 import json
-import pp
+from requests.exceptions import HTTPError
 
 from .services import Services
 from .job import Job
@@ -114,7 +114,10 @@ class Client(object):
     def save(self, filename, jobid, to=None, project=None):
         if to is None:
             to = filename
-        raw = self.fetch(filename, jobid, project)
-        with open(to, 'wb') as f:
-            f.write(raw)
+        try:
+            raw = self.fetch(filename, jobid, project)
+            with open(to, 'wb') as f:
+                f.write(raw)
+        except HTTPError:
+            print('Error: file not found')
 
