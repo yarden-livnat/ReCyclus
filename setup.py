@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='recyclus',
-    version='0.3.0',
+    version='0.3.2',
     license='BSD',
     maintainer='Yarden Livnat',
     description='Client for Recyclus remote services',

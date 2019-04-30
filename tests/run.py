@@ -3,7 +3,7 @@ import time
 
 
 def load(job):
-    print('fetching cyclus.sqlite...')
+    print('saving cyclus.sqlite...')
     client.save('cyclus.sqlite', job.jobid)
 
 
@@ -16,9 +16,9 @@ def wait_for_completion(job):
             return
 
         info = resp['info']
-        print(f"\tStatus: {info['status']} {info.get('error', '')}")
+        print(f"\tStatus: {info['status']}")
 
-        if info['status'] in ['done', 'error', 'unknown job']:
+        if info['status'] in ['done', 'error', 'failed', 'unknown job']:
             if info['status'] == 'done':
                 load(job)
                 # job.delete()
@@ -29,11 +29,11 @@ def wait_for_completion(job):
 client = Client()
 job = client.run(scenario='./scenario.xml', project='demo')
 
-wait_for_completion(job)
 print('job submitted:', job.jobid)
+wait_for_completion(job)
 
 
-print('files:',job.files)
+print('files:',job.files())
 
 print('list:')
 job.list()
